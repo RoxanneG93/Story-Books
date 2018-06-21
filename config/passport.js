@@ -20,7 +20,7 @@ module.exports = function(passport){
 			);
 			const newUser = {
 				googleID: profile.id,
-				firstName: prfile.name.givenName,
+				firstName: profile.name.givenName,
 				lastName: profile.name.familyName,
 				email: profile.emails[0].value,
 				image: image
@@ -41,4 +41,12 @@ module.exports = function(passport){
 			})
 		})
 	);
+
+	passport.serializeUser((user, done) => {
+		done(null, user.id);
+	});
+
+	passport.deserializeUser((id, done) => {
+		User.findById(id).then(user => done(null, user));
+	});
 }

@@ -1,5 +1,8 @@
 const express = require('express');
+const exphbs = require('express-handlebars');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
 const passport = require('passport');
 
 const app = express();
@@ -7,8 +10,35 @@ const app = express();
 // Load User Model
 require('./models/User');
 
+// Load Routes
+const index = require('./routes');
+const auth = require('./routes/auth');
+
+
+//  HandleBars Middleware
+app.engine('handlebars', exphbs({
+	defaultLayout: 'main'
+}))
+app.set('view engine', 'handlebars');
+
+
 // Passport Config
 require('./config/passport')(passport);
+
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(cookieParser());
+app.use(session({
+	secret: 'secret',
+	resave: false,
+	saveUnitialized: false
+}));
+
+// Set Global variables
+app.use((req, res, next) => {
+	res.locals.user = req.user || null;
+	next();
+});
 
 // Load Keys
 const keys = require('./config/keys');
@@ -22,17 +52,11 @@ mongoose.connect(keys.mongoURI)
 	.catch(err => console.log(err));
 
 
-// Load Routes
-const auth = require('./routes/auth');
-
-
 // USE Routes
+app.use('/', index);
 app.use('/auth', auth);
 
 // Routes
-app.get('/', (req, res) => {
-	res.send('It Works!');
-});
 
 
 // SERVER
